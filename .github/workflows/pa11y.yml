@@ -75,7 +75,8 @@ jobs:
         continue-on-error: true
         run: yarn run pa11y-ci
       
-
+      - name: List directory contents after
+        run: ls -la
 
       # - name: Deploy to GitHub Pages
       #   uses: JamesIves/github-pages-deploy-action@4.1.5
