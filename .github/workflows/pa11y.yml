@@ -40,7 +40,7 @@ jobs:
 
       - name: Install specific dependencies
         run: |
-          yarn add pa11y pa11y-ci pa11y-ci-reporter-html
+          yarn add pa11y pa11y-ci pa11y-ci-reporter-html xml2js
 
       - name: Setup Chrome
         run: sudo apt-get install google-chrome-stable
@@ -87,11 +87,14 @@ jobs:
     runs-on: ubuntu-latest
     needs: deploy
     steps:
-    - name: Comment on PR
-      run: |
-        OUTPUT_URL="https://CFsylvester.github.io/pa11y/reports/"
-        PR_COMMENT="Deployed preview: $OUTPUT_URL"
-  
-        gh pr comment ${GITHUB_REF} --body "$PR_COMMENT"
-      env:
-        GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+    - name: Comment on PR that audit has begun
+      uses: actions/github-script@v6
+      with:
+        script: |
+          OUTPUT_URL="https://CFsylvester.github.io/pa11y/reports/"
+          github.rest.issues.createComment({
+            issue_number: context.issue.number,
+            owner: context.repo.owner,
+            repo: context.repo.repo,
+            body: 'Deployed Pa11y Audit Results: ${OUTPUT_URL}'
+          })  
