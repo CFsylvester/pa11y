@@ -27,19 +27,17 @@ jobs:
     needs: check_comment
     runs-on: ubuntu-latest
     steps:
-    - name: Comment on PR that audit has begun
-      uses: actions/github-script@v5 # Use the latest version
-      with:
-        script: |
-          const issue_number = context.issue.number;
-          const message = "Pa11y audit has begun, please wait for the results.";
-          await github.issues.createComment({
-            owner: context.repo.owner,
-            repo: context.repo.repo,
-            issue_number: issue_number,
-            body: message
-          });
-        github-token: ${{ secrets.GITHUB_TOKEN }}
+      - name: Comment on PR that audit has begun
+        uses: actions/github-script@v5 # Ensure you're using the latest version
+        with:
+          script: |
+            const { issue, repo } = context;
+            const message = "Pa11y audit has begun, please wait for the results.";
+            await github.request(`POST /repos/${repo.owner}/${repo.repo}/issues/${issue.number}/comments`, {
+              body: message
+            });
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+
 
   setup:
     needs: initial_comment
