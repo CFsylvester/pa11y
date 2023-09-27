@@ -1,8 +1,6 @@
 {
     "defaults": {
-      "reporters": [
-        ["pa11y-ci-reporter-html", { "includeZeroIssues": true }]
-      ],
+      "reporters": ["pa11y-ci-reporter-html"],
       "chromeLaunchConfig": {
         "args": ["--no-sandbox"]
       }
