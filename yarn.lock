@@ -50,11 +50,6 @@ axe-core@^4.0.2:
   resolved "https://registry.yarnpkg.com/axe-core/-/axe-core-4.8.2.tgz#2f6f3cde40935825cf4465e3c1c9e77b240ff6ae"
   integrity sha512-/dlp0fxyM3R8YW7MFzaHWXrf4zzbr0vaYb23VBFCl83R7nWNPg/yaQw2Dc8jzCMmDVLhSdzH8MjrsuIUuvX+6g==
 
-axe-core@~4.2.1:
-  version "4.2.4"
-  resolved "https://registry.yarnpkg.com/axe-core/-/axe-core-4.2.4.tgz#626cfbd1827985c5b20a9b9ae5bc3dbe8a3df490"
-  integrity sha512-9AiDKFKUCWEQm1Kj4lcq7KFavLqSXdf2m/zJo+NVh4VXlW5iwXRJ6alkKmipCyYorsRnqsICH9XLubP1jBF+Og==
-
 balanced-match@^1.0.0:
   version "1.0.2"
   resolved "https://registry.yarnpkg.com/balanced-match/-/balanced-match-1.0.2.tgz#e83e3a7e3f300b34cb9d87f615fa0cbf357690ee"
@@ -353,7 +348,7 @@ hoopy@^0.1.4:
   resolved "https://registry.yarnpkg.com/hoopy/-/hoopy-0.1.4.tgz#609207d661100033a9a9402ad3dea677381c1b1d"
   integrity sha512-HRcs+2mr52W0K+x8RzcLzuPPmVIKMSv97RGHy0Ea9y/mpcaK+xTrjICA04KAHi4GRzxliNqNJEFYWHghy3rSfQ==
 
-html_codesniffer@^2.5.1, html_codesniffer@~2.5.1:
+html_codesniffer@^2.5.1:
   version "2.5.1"
   resolved "https://registry.yarnpkg.com/html_codesniffer/-/html_codesniffer-2.5.1.tgz#d76d124b8f5cd0e58b3c1b142fd095a40573ea28"
   integrity sha512-vcz0yAaX/OaV6sdNHuT9alBOKkSxYb8h5Yq26dUqgi7XmCgGUSa7U9PiY1PBXQFMjKv1wVPs5/QzHlGuxPDUGg==
@@ -449,11 +444,6 @@ ms@2.1.2:
   version "2.1.2"
   resolved "https://registry.yarnpkg.com/ms/-/ms-2.1.2.tgz#d09d1f357b443f493382a8eb3ccd183872ae6009"
   integrity sha512-sGkPx+VjMtmA6MX27oA4FBFELFCZZ4S4XqeGOXCv68tT+jb3vk/RyaKWP0PTKyWtmLSM0b+adUTEvbs1PEaH2w==
-
-mustache@~4.2.0:
-  version "4.2.0"
-  resolved "https://registry.yarnpkg.com/mustache/-/mustache-4.2.0.tgz#e5892324d60a12ec9c2a73359edca52972bf6f64"
-  integrity sha512-71ippSywq5Yb7/tVYyGbkBggbU8H3u5Rz56fH60jGFgr8uHwxs+aSKeqmluIVzM0m0kB7xQjKS6qPfd0b2ZoqQ==
 
 neo-async@^2.6.2:
   version "2.6.2"
@@ -564,23 +554,6 @@ pa11y-reporter-html-plus@^2.0.1:
   integrity sha512-AtGuXYhISm6SFBLVXhzBkRnT3lOu9n2ryIGHHJt/q1NFH6oMlcLXkVRHlhtM6ZiVIHLa5ObKlhCHPDlzwxheZQ==
   dependencies:
     handlebars "^4.7.8"
-
-pa11y@^6.2.3:
-  version "6.2.3"
-  resolved "https://registry.yarnpkg.com/pa11y/-/pa11y-6.2.3.tgz#920de467a9fa0d52c80e07ae910ea98b167b7336"
-  integrity sha512-69JoUlfW2QVmrgQAm+17XBxIvmd1u0ImFBYIHPyjC61CzAkmxO3kkbqDVxIcl0OKLvAMYSMbvfCH8kMFE9xsbg==
-  dependencies:
-    axe-core "~4.2.1"
-    bfj "~7.0.2"
-    commander "~8.0.0"
-    envinfo "~7.8.1"
-    html_codesniffer "~2.5.1"
-    kleur "~4.1.4"
-    mustache "~4.2.0"
-    node.extend "~2.0.2"
-    p-timeout "~4.1.0"
-    puppeteer "~9.1.1"
-    semver "~7.3.5"
 
 pa11y@~6.1.0:
   version "6.1.1"

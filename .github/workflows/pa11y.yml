@@ -52,7 +52,7 @@ jobs:
 
       - name: Install specific dependencies
         run: |
-          yarn add pa11y pa11y-ci pa11y-ci-reporter-html xml2js
+          yarn add pa11y-ci pa11y-ci-reporter-html xml2js
 
       - name: Setup Chrome
         run: sudo apt-get install google-chrome-stable
