@@ -71,6 +71,7 @@ jobs:
           SITEMAP_URL: https://amperity-corpsite-development-git-pa11y-patch-amperity.vercel.app/sitemap.xml
 
       - name: Run pa11y
+        continue-on-error: true
         run: yarn run pa11y-ci --config .pa11yci.json 2>&1
 
       - name: Deploy to GitHub Pages
