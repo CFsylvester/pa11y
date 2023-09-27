@@ -79,14 +79,14 @@ jobs:
         uses: JamesIves/github-pages-deploy-action@4.1.5
         with:
           branch: main
-          folder: reports
+          folder: pa11y-ci-report
           token: ${{ secrets.GITHUB_TOKEN }}
           
       - name: Provide Deploy Link
         uses: actions/github-script@v6
         with:
           script: |
-            OUTPUT_URL="https://CFsylvester.github.io/pa11y/reports/"
+            OUTPUT_URL="https://CFsylvester.github.io/pa11y/pa11y-ci-report/"
             github.rest.issues.createComment({
               issue_number: context.issue.number,
               owner: context.repo.owner,
