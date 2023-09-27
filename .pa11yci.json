@@ -1,8 +1,8 @@
 {
-    "defaults": {
-      "reporters": ["pa11y-ci-reporter-html"],
-      "chromeLaunchConfig": {
-        "args": ["--no-sandbox"]
-      }
+  "defaults": {
+    "reporters": ["pa11y-ci-reporter-html"],
+    "chromeLaunchConfig": {
+      "args": ["--no-sandbox"]
     }
+  }
 }
