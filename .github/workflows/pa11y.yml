@@ -73,7 +73,7 @@ jobs:
 
       - name: Run pa11y
         continue-on-error: true
-        run: yarn run pa11y-ci
+        run: sudo yarn run pa11y-ci
       
       - name: List directory contents after
         run: ls -la
