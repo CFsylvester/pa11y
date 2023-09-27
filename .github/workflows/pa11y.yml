@@ -28,15 +28,15 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Comment on PR that audit has begun
-        uses: actions/github-script@v5 # Ensure you're using the latest version
+        uses: actions/github-script@v6
         with:
           script: |
-            const { issue, repo } = context;
-            const message = "Pa11y audit has begun, please wait for the results.";
-            await github.request(`POST /repos/${repo.owner}/${repo.repo}/issues/${issue.number}/comments`, {
-              body: message
-            });
-          github-token: ${{ secrets.GITHUB_TOKEN }}
+            github.rest.issues.createComment({
+              issue_number: context.issue.number,
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              body: '👋 Pa11y Audit has begun, please wait for the pending results...'
+            })
 
 
   setup:
