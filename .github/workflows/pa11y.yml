@@ -78,7 +78,7 @@ jobs:
       - name: Deploy to GitHub Pages
         uses: JamesIves/github-pages-deploy-action@4.1.5
         with:
-          branch: main
+          branch: gh-pages
           folder: pa11y-ci-report
           token: ${{ secrets.GITHUB_TOKEN }}
           
