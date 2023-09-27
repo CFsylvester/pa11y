@@ -5,7 +5,7 @@ on:
 
 permissions:
   id-token: write
-  contents: read
+  contents: write
   issues: write
   pull-requests: write
 
@@ -79,6 +79,7 @@ jobs:
         with:
           branch: gh-pages
           folder: reports
+          token: ${{ secrets.GITHUB_TOKEN }}
           
       - name: Comment on PR that audit has begun
         uses: actions/github-script@v6
