@@ -5,8 +5,6 @@
       ],
       "chromeLaunchConfig": {
         "args": ["--no-sandbox"]
-      }, 
-      "urls": [
-        "https://www.gov.uk"]
+      }
     }
 }
