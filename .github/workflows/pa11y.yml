@@ -70,10 +70,13 @@ jobs:
         run: node ./.github/workflows/scripts/extract-urls.js
         env:
           SITEMAP_URL: https://amperity-corpsite-development-git-pa11y-patch-amperity.vercel.app/sitemap.xml
-
+      
+      - name: Set directory permissions
+        run: chmod -R 777 .
+      
       - name: Create reports directory
         run: mkdir -p ./pa11y-ci-report
-        
+
       - name: Run pa11y
         continue-on-error: true
         run: yarn run pa11y-ci
