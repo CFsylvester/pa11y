@@ -5,7 +5,6 @@ on:
 
 jobs:
 
-  # Check if the comment contains the command to run the action
   check_comment:
     runs-on: ubuntu-latest
     outputs:
@@ -13,7 +12,6 @@ jobs:
     steps:
       - name: Trim comment
         id: trim_comment
-        # Check if the trimmed comment matches the command to run pa11y
         run: |
           COMMENT=$(echo "${{ github.event.comment.body }}" | xargs)
           if [ "$COMMENT" == "/run-pa11y-action" ]; then
@@ -21,7 +19,7 @@ jobs:
           else
             echo "::set-output name=should_run::false"
           fi
-  
+
   # Notify in the PR that the audit process is starting
   initial_comment:
     name: Post initial comment to PR
@@ -30,48 +28,35 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Comment on PR that audit has begun
-        # This step posts a comment to the PR notifying the start of the pa11y audit
-        run: |
-          COMMENT="Pa11y audit has begun, please wait for the results."
-          GH_REPO="https://api.github.com/repos/${GITHUB_REPOSITORY}"
-          GH_HEADERS="Authorization: token ${GITHUB_TOKEN}"
-          GH_PAYLOAD=$(echo '{}' | jq --arg body "$COMMENT" '.body = $body')
-          RESPONSE=$(curl -S -H "${GH_HEADERS}" -d "${GH_PAYLOAD}" -H "Content-Type: application/json" -X POST "${GH_REPO}/issues/${{ github.event.issue.number }}/comments")
-          echo "Response from GitHub API: $RESPONSE"
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        uses: actions/github-script@v4
+        with:
+          script: |
+            const issue_number = context.issue.number;
+            const message = "Pa11y audit has begun, please wait for the results.";
+            github.rest.issues.createComment({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              issue_number: issue_number,
+              body: message
+            });
+          github-token: ${{ secrets.GITHUB_TOKEN }}
 
-  # Set up the environment to run pa11y
   setup:
     needs: initial_comment
     runs-on: ubuntu-latest
     steps:
       - name: Checkout code
-        # This step checks out the code from the repository to the runner
         uses: actions/checkout@v3
       
       - name: Use Node.js
-        # This step sets up the specified version of Node.js in the runner
         uses: actions/setup-node@v3
         with:
           node-version: 18.16.0
-          cache: yarn
       
       - name: Install specific dependencies
-        # This step installs specific npm packages
         run: |
           yarn add pa11y pa11y-ci pa11y-ci-reporter-html
-      
-      - name: Cache node modules
-        # This step caches the node_modules directory for faster subsequent runs
-        uses: actions/cache@v2
-        with:
-          path: node_modules
-          key: ${{ runner.OS }}-node-${{ hashFiles('**/yarn.lock') }}
-          restore-keys: |
-            ${{ runner.OS }}-node-
 
-  # Run the pa11y CI audit
   pa11y-ci:
     needs: setup
     runs-on: ubuntu-latest
@@ -83,68 +68,46 @@ jobs:
         uses: actions/setup-node@v3
         with:
           node-version: 18.16.0
-          cache: yarn
-
-      - name: Restore Cached Dependencies
-        # Restore cached dependencies for faster installation
-        uses: actions/cache@v2
-        with:
-          path: node_modules
-          key: ${{ runner.OS }}-node-${{ hashFiles('**/yarn.lock') }}
-          restore-keys: |
-            ${{ runner.OS }}-node-
 
       - name: Setup Chrome
-        # Install Chrome browser which might be needed for certain pa11y tests
         run: sudo apt-get install google-chrome-stable
 
       - name: Get Chrome path
-        # Get the installation path of Chrome and set it as an environment variable
         run: echo "CHROME_PATH=$(which google-chrome-stable)" >> $GITHUB_ENV
 
       - name: Update pa11y config with Chrome path
-        # Update the pa11y configuration to use the installed Chrome path
         run: >
           jq '.defaults.chromeLaunchConfig.executablePath = env.CHROME_PATH'
           .pa11yci.json > .pa11yci.tmp.json && mv .pa11yci.tmp.json
           .pa11yci.json
 
       - name: Update pa11y config JSON
-        # Use a script to extract URLs for the pa11y audit
         run: node ./.github/workflows/scripts/extract-urls.js
         env:
           SITEMAP_URL: https://amperity.com/sitemap.xml
 
       - name: Run pa11y
-        # Execute the pa11y audit
         run: yarn run pa11y-ci --config .pa11yci.json 2>&1
 
-  # Deploy the pa11y reports
   deploy:
     needs: pa11y-ci
     runs-on: ubuntu-latest
     steps:
       - name: Deploy to GitHub Pages
-        # Deploy the generated reports to GitHub Pages
         uses: JamesIves/github-pages-deploy-action@4.1.5
         with:
           branch: gh-pages
           folder: reports
 
-  # Comment on the PR with the deployed reports' link
   comment:
     runs-on: ubuntu-latest
-    needs: deploy # Make sure deployment finishes before commenting
+    needs: deploy
     steps:
     - name: Comment on PR
       run: |
         OUTPUT_URL="https://CFsylvester.github.io/pa11y/reports/"
         PR_COMMENT="Deployed preview: $OUTPUT_URL"
   
-        # Post comment with the link to the reports on GitHub Pages
         gh pr comment ${GITHUB_REF} --body "$PR_COMMENT"
       env:
         GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        run: |
-          echo Add other actions to build,
-          echo test, and deploy your project.
