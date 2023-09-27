@@ -31,14 +31,6 @@ jobs:
     if: github.event_name == 'issue_comment' && needs.check_comment.outputs.should_run == 'true' && github.event.issue.pull_request
     runs-on: ubuntu-latest
     steps:
-      - name: Checkout code
-        uses: actions/checkout@v3
-      
-      - name: Use Node.js
-        uses: actions/setup-node@v3
-        with:
-          node-version: 18.16.0
-
       - name: Comment on PR that audit has begun
         uses: actions/github-script@v6
         with:
@@ -48,7 +40,15 @@ jobs:
               owner: context.repo.owner,
               repo: context.repo.repo,
               body: '👋 Pa11y Audit has begun, please wait for the pending results...'
-            })   
+            })  
+            
+      - name: Checkout code
+        uses: actions/checkout@v3
+      
+      - name: Use Node.js
+        uses: actions/setup-node@v3
+        with:
+          node-version: 18.16.0 
 
       - name: Install specific dependencies
         run: |
