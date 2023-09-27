@@ -1,0 +1,114 @@
+name: "pa11y"
+on:
+  issue_comment:
+    types: [created, edited]
+jobs:
+  check_comment:
+    runs-on: ubuntu-latest
+    outputs:
+      should_run: ${{ steps.trim_comment.outputs.should_run }}
+    steps:
+      - name: Trim comment
+        id: trim_comment
+        run: |
+          COMMENT=$(echo "${{ github.event.comment.body }}" | xargs)
+          if [ "$COMMENT" == "/run-pa11y-action" ]; then
+            echo "::set-output name=should_run::true"
+          else
+            echo "::set-output name=should_run::false"
+          fi
+  initial_comment:
+    name: Post initial comment to PR
+    if: github.event_name == 'issue_comment' && needs.check_comment.outputs.should_run == 'true' && github.event.issue.pull_request
+    needs: check_comment
+    runs-on: ubuntu-latest
+    steps:
+      - name: Comment on PR that audit has begun
+        run: |
+          COMMENT="Pa11y audit has begun, please wait for the results."
+          GH_REPO="https://api.github.com/repos/${GITHUB_REPOSITORY}"
+          GH_HEADERS="Authorization: token ${GITHUB_TOKEN}"
+          GH_PAYLOAD=$(echo '{}' | jq --arg body "$COMMENT" '.body = $body')
+          RESPONSE=$(curl -S -H "${GH_HEADERS}" -d "${GH_PAYLOAD}" -H "Content-Type: application/json" -X POST "${GH_REPO}/issues/${{ github.event.issue.number }}/comments")
+          echo "Response from GitHub API: $RESPONSE"
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+  setup:
+    needs: initial_comment
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v3
+      - name: Use Node.js
+        uses: actions/setup-node@v3
+        with:
+          node-version: 18.6.0
+          cache: yarn
+      - name: Install specific dependencies
+        run: |
+          yarn add pa11y pa11y-ci pa11y-ci-reporter-html
+      - name: Cache node modules
+        uses: actions/cache@v2
+        with:
+          path: node_modules
+          key: ${{ runner.OS }}-node-${{ hashFiles('**/yarn.lock') }}
+          restore-keys: |
+            ${{ runner.OS }}-node-
+  pa11y-ci:
+    needs: setup
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v3
+      - name: Use Node.js
+        uses: actions/setup-node@v3
+        with:
+          node-version: 18.6.0
+          cache: yarn
+      - name: Restore Cached Dependencies
+        uses: actions/cache@v2
+        with:
+          path: node_modules
+          key: ${{ runner.OS }}-node-${{ hashFiles('**/yarn.lock') }}
+          restore-keys: |
+            ${{ runner.OS }}-node-
+      - name: Setup Chrome
+        run: sudo apt-get install google-chrome-stable
+      - name: Get Chrome path
+        run: echo "CHROME_PATH=$(which google-chrome-stable)" >> $GITHUB_ENV
+      - name: Update pa11y config with Chrome path
+        run: >
+          jq '.defaults.chromeLaunchConfig.executablePath = env.CHROME_PATH'
+          .pa11yci.json > .pa11yci.tmp.json && mv .pa11yci.tmp.json
+          .pa11yci.json
+      - name: Update pa11y config JSON
+        run: node ./.github/workflows/scripts/extract-urls.js
+        env:
+          SITEMAP_URL: https://amperity.com/sitemap.xml
+      - name: Run pa11y
+        run: yarn run pa11y-ci --config .pa11yci.json 2>&1
+  deploy:
+    needs: pa11y-ci
+    runs-on: ubuntu-latest
+    steps:
+      - name: Deploy to GitHub Pages
+        uses: JamesIves/github-pages-deploy-action@4.1.5
+        with:
+          branch: gh-pages
+          folder: reports
+  comment:
+    runs-on: ubuntu-latest
+    needs: deploy # Make sure deployment finishes before commenting
+    steps:
+    - name: Comment on PR
+      run: |
+        OUTPUT_URL="https://CFsylvester.github.io/pa11y/reports/"
+        PR_COMMENT="Deployed preview: $OUTPUT_URL"
+  
+        # Post comment using GitHub API
+        gh pr comment ${GITHUB_REF} --body "$PR_COMMENT"
+      env:
+        GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          echo Add other actions to build,
+          echo test, and deploy your project.
