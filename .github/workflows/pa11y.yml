@@ -25,6 +25,7 @@ jobs:
           else
             echo "::set-output name=should_run::false"
           fi
+          
   pa11y-ci:
     needs: check_comment
     if: github.event_name == 'issue_comment' && needs.check_comment.outputs.should_run == 'true' && github.event.issue.pull_request
@@ -38,16 +39,6 @@ jobs:
         with:
           node-version: 18.16.0
 
-      - name: Install specific dependencies
-        run: |
-          yarn add pa11y pa11y-ci pa11y-ci-reporter-html xml2js
-
-      - name: Setup Chrome
-        run: sudo apt-get install google-chrome-stable
-
-      - name: Get Chrome path
-        run: echo "CHROME_PATH=$(which google-chrome-stable)" >> $GITHUB_ENV
-
       - name: Comment on PR that audit has begun
         uses: actions/github-script@v6
         with:
@@ -57,7 +48,17 @@ jobs:
               owner: context.repo.owner,
               repo: context.repo.repo,
               body: '👋 Pa11y Audit has begun, please wait for the pending results...'
-            })    
+            })   
+
+      - name: Install specific dependencies
+        run: |
+          yarn add pa11y pa11y-ci pa11y-ci-reporter-html xml2js
+
+      - name: Setup Chrome
+        run: sudo apt-get install google-chrome-stable
+
+      - name: Get Chrome path
+        run: echo "CHROME_PATH=$(which google-chrome-stable)" >> $GITHUB_ENV 
 
       - name: Update pa11y config with Chrome path
         run: >
@@ -81,7 +82,7 @@ jobs:
           folder: reports
           token: ${{ secrets.GITHUB_TOKEN }}
           
-      - name: Comment on PR that audit has begun
+      - name: Provide Deploy Link
         uses: actions/github-script@v6
         with:
           script: |
