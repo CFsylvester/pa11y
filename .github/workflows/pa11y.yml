@@ -3,6 +3,12 @@ on:
   issue_comment:
     types: [created, edited]
 
+permissions:
+  id-token: write
+  contents: read
+  issues: write
+  pull-requests: write
+
 jobs:
 
   check_comment:
@@ -19,14 +25,29 @@ jobs:
           else
             echo "::set-output name=should_run::false"
           fi
-
-  # Notify in the PR that the audit process is starting
-  initial_comment:
-    name: Post initial comment to PR
-    if: github.event_name == 'issue_comment' && needs.check_comment.outputs.should_run == 'true' && github.event.issue.pull_request
+  pa11y-ci:
     needs: check_comment
+    if: github.event_name == 'issue_comment' && needs.check_comment.outputs.should_run == 'true' && github.event.issue.pull_request
     runs-on: ubuntu-latest
     steps:
+      - name: Checkout code
+        uses: actions/checkout@v3
+      
+      - name: Use Node.js
+        uses: actions/setup-node@v3
+        with:
+          node-version: 18.16.0
+
+      - name: Install specific dependencies
+        run: |
+          yarn add pa11y pa11y-ci pa11y-ci-reporter-html
+
+      - name: Setup Chrome
+        run: sudo apt-get install google-chrome-stable
+
+      - name: Get Chrome path
+        run: echo "CHROME_PATH=$(which google-chrome-stable)" >> $GITHUB_ENV
+
       - name: Comment on PR that audit has begun
         uses: actions/github-script@v6
         with:
@@ -36,42 +57,7 @@ jobs:
               owner: context.repo.owner,
               repo: context.repo.repo,
               body: '👋 Pa11y Audit has begun, please wait for the pending results...'
-            })
-
-
-  setup:
-    needs: initial_comment
-    runs-on: ubuntu-latest
-    steps:
-      - name: Checkout code
-        uses: actions/checkout@v3
-      
-      - name: Use Node.js
-        uses: actions/setup-node@v3
-        with:
-          node-version: 18.16.0
-      
-      - name: Install specific dependencies
-        run: |
-          yarn add pa11y pa11y-ci pa11y-ci-reporter-html
-
-  pa11y-ci:
-    needs: setup
-    runs-on: ubuntu-latest
-    steps:
-      - name: Checkout code
-        uses: actions/checkout@v3
-      
-      - name: Use Node.js
-        uses: actions/setup-node@v3
-        with:
-          node-version: 18.16.0
-
-      - name: Setup Chrome
-        run: sudo apt-get install google-chrome-stable
-
-      - name: Get Chrome path
-        run: echo "CHROME_PATH=$(which google-chrome-stable)" >> $GITHUB_ENV
+            })    
 
       - name: Update pa11y config with Chrome path
         run: >
