@@ -68,7 +68,7 @@ jobs:
       - name: Update pa11y config JSON
         run: node ./.github/workflows/scripts/extract-urls.js
         env:
-          SITEMAP_URL: https://amperity.com/sitemap.xml
+          SITEMAP_URL: https://amperity-corpsite-development-git-pa11y-patch-amperity.vercel.app/sitemap.xml
 
       - name: Run pa11y
         run: yarn run pa11y-ci --config .pa11yci.json 2>&1
