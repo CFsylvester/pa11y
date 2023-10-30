@@ -62,6 +62,7 @@ const updatePa11yConfigWithUrls = async (sitemapUrl) => {
 // Get sitemap URL from command-line argument.
 const sitemapUrl = process.env.SITEMAP_URL
 
+// catch statement will print the error message
 if (!sitemapUrl) {
   console.error("Please provide a sitemap URL.")
   process.exit(1)
