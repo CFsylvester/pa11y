@@ -15,6 +15,7 @@ jobs:
     runs-on: ubuntu-latest
     outputs:
       should_run: ${{ steps.trim_comment.outputs.should_run }}
+      should_run_sitemap: ${{ steps.trim_comment.outputs.should_run_sitemap }}
     steps:
       - name: Trim comment
         id: trim_comment
@@ -25,10 +26,16 @@ jobs:
           else
             echo "::set-output name=should_run::false"
           fi
+
+          if [ "$COMMENT" == "/run-pa11y-action-sitemap" ]; then
+            echo "::set-output name=should_run_sitemap::true"
+          else
+            echo "::set-output name=should_run_sitemap::false"
+          fi
           
   pa11y-ci:
     needs: check_comment
-    if: github.event_name == 'issue_comment' && needs.check_comment.outputs.should_run == 'true' && github.event.issue.pull_request
+    if: (github.event_name == 'issue_comment' && github.event.issue.pull_request) && (needs.check_comment.outputs.should_run == 'true' || needs.check_comment.outputs.should_run_sitemap == 'true')
     runs-on: ubuntu-latest
     steps:
       - name: Comment on PR that audit has begun
@@ -67,13 +74,22 @@ jobs:
           .pa11yci.json
 
       - name: Update pa11y config JSON
+        if: needs.check_comment.outputs.should_run == 'true'
         run: node ./.github/workflows/scripts/extract-urls.js
         env:
-          SITEMAP_URL: https://amperity-corpsite-development-git-pa11y-patch-amperity.vercel.app/sitemap.xml
-
-      - name: Run pa11y
+          SITEMAP_URL: https://amperity-corpsite-development.vercel.app/sitemap.xml
+        
+      - name: Run pa11y-ci
         continue-on-error: true
-        run: sudo yarn run pa11y-ci
+        if: needs.check_comment.outputs.should_run == 'true'
+        run: |
+          sudo yarn run pa11y-ci
+    
+      - name: Run pa11y-ci on sitemap
+        if: needs.check_comment.outputs.should_run_sitemap == 'true'
+        run: |
+          sudo yarn run pa11y-ci --sitemap https://amperity-corpsite-development.vercel.app/sitemap.xml
+    
 
       - name: Deploy to GitHub Pages
         uses: JamesIves/github-pages-deploy-action@4.1.5

@@ -4,6 +4,7 @@
     ["pa11y-ci-reporter-html", { "destination": "pa11y-ci-report" }]],
     "chromeLaunchConfig": {
       "args": ["--no-sandbox"]
-    }
+    },
+    "hideElements": "#st-injected-content, #CybotCookiebotDialogHeader, #CybotCookiebotDialogBodyLevelButtonsSelectPane, #CybotCookiebotDialogDetailBodyContentCookieContainerNecessaryCard, #CybotCookiebotDialogDetailBodyContentCookieContainerPreferenceCard, #CybotCookiebotDialogDetailBodyContentCookieContainerStatisticsCard,  #CybotCookiebotDialogDetailBodyContentCookieContainerAdvertisingCard, #CybotCookiebotDialogBodyButtons, #CybotCookiebotBannerCloseButtonE2E, html > body > iframe:nth-child(9)"
   }
 }
