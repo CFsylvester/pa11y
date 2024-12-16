@@ -1,4 +1,5 @@
 name: "pa11y"
+
 on:
   issue_comment:
     types: [created, edited]
@@ -16,26 +17,37 @@ jobs:
     outputs:
       should_run: ${{ steps.trim_comment.outputs.should_run }}
       should_run_sitemap: ${{ steps.trim_comment.outputs.should_run_sitemap }}
+      should_run_hardcoded: ${{ steps.trim_comment.outputs.should_run_hardcoded }}
     steps:
-      - name: Trim comment
+      - name: Trim and Parse Comment
         id: trim_comment
         run: |
           COMMENT=$(echo "${{ github.event.comment.body }}" | xargs)
+          
+          # Initialize outputs
+          echo "::set-output name=should_run::false"
+          echo "::set-output name=should_run_sitemap::false"
+          echo "::set-output name=should_run_hardcoded::false"
+          
+          # Check for /run-pa11y-action
           if [ "$COMMENT" == "/run-pa11y-action" ]; then
             echo "::set-output name=should_run::true"
-          else
-            echo "::set-output name=should_run::false"
-          fi
-
-          if [ "$COMMENT" == "/run-pa11y-action-sitemap" ]; then
-            echo "::set-output name=should_run_sitemap::true"
-          else
-            echo "::set-output name=should_run_sitemap::false"
           fi
           
+          # Check for /run-pa11y-action-sitemap
+          if [ "$COMMENT" == "/run-pa11y-action-sitemap" ]; then
+            echo "::set-output name=should_run_sitemap::true"
+          fi
+          
+          # Check for /run-pa11y-action-hardcoded-urls
+          if [[ "$COMMENT" == "/run-pa11y-action-hardcoded-urls"* ]]; then
+            echo "::set-output name=should_run_hardcoded::true"
+            # Optionally, extract additional flags or parameters if needed
+          fi
+
   pa11y-ci:
     needs: check_comment
-    if: (github.event_name == 'issue_comment' && github.event.issue.pull_request) && (needs.check_comment.outputs.should_run == 'true' || needs.check_comment.outputs.should_run_sitemap == 'true')
+    if: (github.event_name == 'issue_comment' && github.event.issue.pull_request) && (needs.check_comment.outputs.should_run == 'true' || needs.check_comment.outputs.should_run_sitemap == 'true' || needs.check_comment.outputs.should_run_hardcoded == 'true')
     runs-on: ubuntu-latest
     steps:
       - name: Comment on PR that audit has begun
@@ -59,39 +71,56 @@ jobs:
 
       - name: Install specific dependencies
         run: |
-          yarn add pa11y-ci pa11y-ci-reporter-html xml2js
-
+          yarn add pa11y-ci pa11y-ci-reporter-html xml2js jq
+    
       - name: Setup Chrome
-        run: sudo apt-get install google-chrome-stable
-
+        run: sudo apt-get update && sudo apt-get install -y wget gnupg
+      - name: Add Google Chrome Repository
+        run: |
+          wget -q -O - https://dl.google.com/linux/linux_signing_key.pub | sudo apt-key add -
+          sudo sh -c 'echo "deb [arch=amd64] https://dl.google.com/linux/chrome/deb/ stable main" >> /etc/apt/sources.list.d/google-chrome.list'
+      - name: Install Google Chrome
+        run: sudo apt-get update && sudo apt-get install -y google-chrome-stable
+    
       - name: Get Chrome path
         run: echo "CHROME_PATH=$(which google-chrome-stable)" >> $GITHUB_ENV 
 
       - name: Update pa11y config with Chrome path
-        run: >
-          jq '.defaults.chromeLaunchConfig.executablePath = env.CHROME_PATH'
-          .pa11yci.json > .pa11yci.tmp.json && mv .pa11yci.tmp.json
-          .pa11yci.json
-
-      - name: Update pa11y config JSON
-        if: needs.check_comment.outputs.should_run == 'true'
-        run: node ./.github/workflows/scripts/extract-urls.js
-        env:
-          SITEMAP_URL: https://www.8451.com/sitemap-0.xml
-        
-      - name: Run pa11y-ci
-        continue-on-error: true
-        if: needs.check_comment.outputs.should_run == 'true'
         run: |
-          sudo yarn run pa11y-ci
+          jq --arg path "$CHROME_PATH" '.defaults.chromeLaunchConfig.executablePath = $path' .pa11yci.json > .pa11yci.tmp.json && mv .pa11yci.tmp.json .pa11yci.json
     
-      - name: Run pa11y-ci on sitemap
+      - name: Update pa11y config JSON for Hardcoded URLs
+        if: needs.check_comment.outputs.should_run_hardcoded == 'true'
+        run: |
+          jq '.urls = (require("./hardcoded-urls.json"))' .pa11yci.json > .pa11yci.tmp.json && mv .pa11yci.tmp.json .pa11yci.json
+    
+      - name: Update pa11y config JSON for Sitemap URLs
         if: needs.check_comment.outputs.should_run_sitemap == 'true'
         run: |
+          node ./.github/workflows/scripts/extract-urls.js
+        env:
+          SITEMAP_URL: https://www.8451.com/sitemap-0.xml
+      
+      - name: Run pa11y-ci on Hardcoded URLs
+        if: needs.check_comment.outputs.should_run_hardcoded == 'true'
+        continue-on-error: true
+        run: |
+          sudo yarn run pa11y-ci --config .pa11yci.json --reporter html --output pa11y-ci-report/hardcoded-report.html
+
+      - name: Run pa11y-ci on Sitemap
+        if: needs.check_comment.outputs.should_run_sitemap == 'true'
+        continue-on-error: true
+        run: |
           sudo yarn run pa11y-ci --sitemap https://www.8451.com/sitemap-0.xml
-    
+
+      - name: Run pa11y-ci Standard
+        if: needs.check_comment.outputs.should_run == 'true'
+        continue-on-error: true
+        run: |
+          sudo yarn run pa11y-ci
 
       - name: Deploy to GitHub Pages
+        if: always()
         uses: JamesIves/github-pages-deploy-action@4.1.5
         with:
           branch: gh-pages
@@ -99,6 +128,7 @@ jobs:
           token: ${{ secrets.GITHUB_TOKEN }}
           
       - name: Provide Deploy Link
+        if: always()
         uses: actions/github-script@v6
         with:
           script: |
