@@ -88,13 +88,8 @@ jobs:
         run: |
           jq --arg path "$CHROME_PATH" '.defaults.chromeLaunchConfig.executablePath = $path' .pa11yci.json > .pa11yci.tmp.json && mv .pa11yci.tmp.json .pa11yci.json
 
-      - name: Update pa11y config JSON for Hardcoded URLs
-        if: needs.check_comment.outputs.should_run_hardcoded == 'true'
-        run: |
-          jq '.urls = ( .urls )' hardcoded-urls.json > hardcoded-urls.tmp.json && mv hardcoded-urls.tmp.json hardcoded-urls.json
-
-      - name: Update pa11y config JSON for Sitemap URLs
-        if: needs.check_comment.outputs.should_run_sitemap == 'true'
+      - name: Update pa11y config JSON for Standard URLs
+        if: needs.check_comment.outputs.should_run == 'true'
         run: |
           node ./.github/workflows/scripts/extract-urls.js
         env:
@@ -104,7 +99,7 @@ jobs:
         if: needs.check_comment.outputs.should_run_hardcoded == 'true'
         continue-on-error: true
         run: |
-          sudo yarn run pa11y-ci --config hardcoded-urls.json --reporter html --output pa11y-ci-report/hardcoded-report.html
+          node ./.github/workflows/scripts/extract-urls.js --hardcoded-urls
 
       - name: Run pa11y-ci on Sitemap
         if: needs.check_comment.outputs.should_run_sitemap == 'true'
@@ -112,8 +107,8 @@ jobs:
         run: |
           sudo yarn run pa11y-ci --sitemap https://www.8451.com/sitemap-0.xml
 
-      - name: Run pa11y-ci Standard
-        if: needs.check_comment.outputs.should_run == 'true'
+      - name: Run pa11y-ci for Standard or Hardcoded URLs
+        if: ${{ needs.check_comment.outputs.should_run == 'true' || needs.check_comment.outputs.should_run_hardcoded == 'true' }}
         continue-on-error: true
         run: |
           sudo yarn run pa11y-ci
