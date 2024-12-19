@@ -1,4 +1,4 @@
-Pa11y GitHub Action
+
 This GitHub Action automates accessibility audits using Pa11y. It listens for specific comments on issues or pull requests and triggers the audit process accordingly.
 
 Trigger Commands
