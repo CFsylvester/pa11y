@@ -91,3 +91,6 @@ Example Usage
 Navigate to the relevant pull request or issue in your repository.
 Add a comment with either /run-pa11y-action or /run-pa11y-action-sitemap based on your auditing needs.
 Wait for the action to complete and review the results via the provided link.
+
+To run script to a json output 
+``` yarn run pa11y-ci --json 2>&1 | tee results.json```
